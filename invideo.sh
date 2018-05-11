@@ -5,7 +5,7 @@ TMP=/mnt/$(echo $INPUT_TARGET | sed  "s/\/dev\///g")
 DEST_FOLDER=$3
 HASH_LIST=$DEST_FOLDER/.hash_list
 
-echo "BRUNINI invideo v0.1 alpha"
+echo "BRUNINI invideo v0.1 beta"
 
 if [[ $ARG = "-m" ]] || [[ $ARG = "-f" ]] || [[ $ARG = "-h" ]] || [[ $ARG = "-c" ]]; then
     echo ""
@@ -65,13 +65,12 @@ fi
 
 echo ""
 echo "Searching for files in $TARGET."
-find $TARGET -type f -name "*.MTS" -o -name "*.MPG" -o -name "*.MOV"
-for FILE_PATH in $(find $TARGET -type f -name "*.MTS" -o -name "*.MPG" -o -name "*.MOV" -o -name "*.JPG")
+find $TARGET -type f -name "*.MTS" -o -name "*.MPG" -o -name "*.MOV" -o -name "*.JPG" | while read FILE_PATH
 do
     EXISTS=0
     echo ''
     echo "Calculating partial file hash of $FILE_PATH"
-    FILE_HASH=$(cat $FILE_PATH | head -n 30720 | sha512sum  | cut -d " " -f1)
+    FILE_HASH=$(cat "$FILE_PATH" | head -n 30720 | sha512sum  | cut -d " " -f1)
     SH=${FILE_HASH:0:15}
     echo "Verify if $SH exists on hash list"
     for HASH_LINE in $(cat $HASH_LIST)
@@ -91,7 +90,7 @@ do
             FILENAME=$(basename -- "$FILE_PATH")
             EXTENSION="${FILENAME##*.}"
             FILENAME="${FILENAME%.*}"
-            pv $FILE_PATH > $DEST_FOLDER/$FILENAME.$SH.$EXTENSION
+            pv "$FILE_PATH" > $DEST_FOLDER/$FILENAME.$SH.$EXTENSION
         fi
         echo $FILE_HASH >> $HASH_LIST 
     fi
@@ -99,7 +98,7 @@ done
 
 
 if [[ $TARGET = $TMP ]]; then
-    umount $TMP
-    rm -rf $TMP
-echo "Temporary mounting point is now unmonted and deleted."
+        umount $TMP
+        rm -rf $TMP
+    echo "Temporary mounting point is now unmonted and deleted."
 fi
